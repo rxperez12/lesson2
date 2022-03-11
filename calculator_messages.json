@@ -1,0 +1,8 @@
+{
+  "welcome": "Welcome to Calculator!",
+  "validName": "Make sure to enter a valid name.",
+  "firstNumber": "What's the first number?\n",
+  "firstNumberWrong": "Hmm... that doesn't look like a valid number. What's your first number?\n",
+  "secondNumber": "What's the second number?\n",
+  "secondNumberWrong": "Hmm... that doesn't look like a valid number. What's your second number?\n"
+}
