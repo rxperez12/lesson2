@@ -1,5 +1,5 @@
 "use strict";
-const readline = 
+const readline = require("readline-sync");
 const CARD_VALUES = [
   "2",
   "3",
@@ -16,6 +16,12 @@ const CARD_VALUES = [
   "A",
 ];
 const SUITS = ["H", "S", "C", "D"];
+const CARD_NAMES = {
+  A: "Ace",
+  K: "King",
+  Q: "Queen",
+  J: "Jack",
+};
 
 function initializeDeck() {
   let deck = [];
@@ -42,13 +48,61 @@ function dealCardsToHand(deck, hand, cards = 1) {
     hand.push(card);
   }
 }
-function displayCards(hand, dealerOrPlayer){
-  let result = ''
-  if(dealerOrPlayer = 'dealer'){
-    result = 'Dealer has: '
+
+function joinAnd(array, spacer = ", ", word = "and") {
+  let string = "";
+  if (array.length === 0) {
+    return string;
   } else {
-    result = 'You have: '
+    for (let i = array.length - 1; i >= 0; i--) {
+      if (i === array.length - 1) {
+        string = String(array[i]);
+      } else if (i === array.length - 2) {
+        string = `${String(array[i])} ${word} ${string}`;
+      } else {
+        string = `${String(array[i])}${spacer}${string}`;
+      }
+    }
   }
+  return string;
+}
+
+function displayCards(hand, dealerOrPlayer) {
+  let cardValues = hand.map((card) => {
+    if (["J", "Q", "K", "A"].includes(card[1])) {
+      return CARD_NAMES[card[1]];
+    } else {
+      return card[1];
+    }
+  });
+  let result = "";
+  if (dealerOrPlayer === "dealer") {
+    cardValues[cardValues.length - 1] = "unknown card";
+    result = `Dealer has: ${joinAnd(cardValues)}`;
+  } else {
+    result = `You have: ${joinAnd(cardValues)}`;
+  }
+  console.log(result);
+}
+
+function total(hand) {
+  let sum = 0;
+  let cardValues = hand.map((card) => card[1]);
+  for (let i = 0; i < cardValues.length; i++) {
+    if (cardValues[i] === "A") {
+      sum += 11;
+    } else if (["J", "Q", "K"].includes(cardValues[i])) {
+      sum += 10;
+    } else {
+      sum += Number(cardValues[i]);
+    }
+  }
+  cardValues
+    .filter((card) => card === "A")
+    .forEach((_) => {
+      if (sum > 21) sum -= 10;
+    });
+  return sum;
 }
 
 let deck = initializeDeck();
@@ -57,3 +111,21 @@ let dealerHand = [];
 
 dealCardsToHand(deck, playerHand, 2);
 dealCardsToHand(deck, dealerHand, 2);
+
+while (true) {
+  displayCards(dealerHand, "dealer");
+  displayCards(playerHand, "player");
+
+  while (true) {
+    console.log("hit or stay?");
+    let answer = readline.question();
+    if (answer === "stay" || busted()) break;
+  }
+
+  if (busted()) {
+    // probably end the game? or ask the user to play again?
+  } else {
+    console.log("You chose to stay!"); // if player didn't bust, must have stayed to get here
+  }
+  break;
+}
