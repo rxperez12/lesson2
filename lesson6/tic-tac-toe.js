@@ -1,8 +1,11 @@
+"use strict";
 const readline = require("readline-sync");
 const INIT_MARKER = " ";
 const HUMAN_MARKER = "X";
 const COMP_MARKER = "O";
-const GLOBAL_WINNER = 5;
+const GLOBAL_WINNER = 3;
+
+let globalScore = { player: 0, computer: 0 };
 
 function prompt(string) {
   console.log(`=> ${string}`);
@@ -44,6 +47,10 @@ function boardFull(board) {
   return emptySquares(board).length === 0;
 }
 
+function capitalize(string) {
+  return string[0].toUpperCase() + string.slice(1);
+}
+
 function detectWinner(board) {
   let winningLines = [
     [1, 2, 3],
@@ -63,7 +70,7 @@ function detectWinner(board) {
       board[sq2] === HUMAN_MARKER &&
       board[sq3] === HUMAN_MARKER
     ) {
-      return "Player";
+      return "Player1";
     } else if (
       board[sq1] === COMP_MARKER &&
       board[sq2] === COMP_MARKER &&
@@ -73,6 +80,31 @@ function detectWinner(board) {
     }
   }
   return null;
+}
+
+function detectGlobalWinner(score) {
+  let keys = Object.keys(score);
+  let winner = keys.filter((key) => score[key] === GLOBAL_WINNER);
+  if (winner.length === 1) {
+    return winner[0];
+  } else {
+    return null;
+  }
+}
+
+function initializeScore(humanPlayers = 1) {
+  let scoreObj = { computer: 0 };
+  for (let i = humanPlayers; i > 0; i--) {
+    scoreObj[`player${i}`] = 0;
+  }
+
+  return scoreObj;
+}
+
+function displayScore(score) {
+  for (const key in score) {
+    prompt(`${capitalize(key)}: ${score[key]}`);
+  }
 }
 
 function playerChoosesSquare(board) {
@@ -117,6 +149,7 @@ function joinOr(array, spacer = ", ", word = "or") {
   return string;
 }
 
+let score = initializeScore();
 while (true) {
   let board = initializeBoard();
   displayBoard(board);
@@ -134,6 +167,17 @@ while (true) {
 
   if (someoneWon(board)) {
     prompt(`${detectWinner(board)} won!`);
+    score[detectWinner(board).toLowerCase()] += 1;
+    displayScore(score);
+
+    if (detectGlobalWinner(score)) {
+      prompt(
+        `${capitalize(
+          detectGlobalWinner(score)
+        )} is the first player to reach ${GLOBAL_WINNER}!`
+      );
+      score = initializeScore();
+    }
   } else {
     prompt("It's a tie!");
   }
