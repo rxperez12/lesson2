@@ -67,7 +67,7 @@ function joinAnd(array, spacer = ", ", word = "and") {
   return string;
 }
 
-function displayCards(hand, dealerOrPlayer) {
+function displayCards(hand, dealerOrPlayer, seeAllDealerCards = false) {
   let cardValues = hand.map((card) => {
     if (["J", "Q", "K", "A"].includes(card[1])) {
       return CARD_NAMES[card[1]];
@@ -77,7 +77,7 @@ function displayCards(hand, dealerOrPlayer) {
   });
   let result = "";
   if (dealerOrPlayer === "dealer") {
-    cardValues[cardValues.length - 1] = "unknown card";
+    if (!seeAllDealerCards) cardValues[cardValues.length - 1] = "unknown card";
     result = `Dealer has: ${joinAnd(cardValues)}`;
   } else {
     result = `You have: ${joinAnd(cardValues)}`;
@@ -105,27 +105,85 @@ function total(hand) {
   return sum;
 }
 
-let deck = initializeDeck();
-let playerHand = [];
-let dealerHand = [];
+function busted(score) {
+  return score > 21;
+}
 
-dealCardsToHand(deck, playerHand, 2);
-dealCardsToHand(deck, dealerHand, 2);
+function displayScoreAndCards(
+  dealerHand,
+  playerHand,
+  playerScore,
+  seeAllDealerCards = false
+) {
+  console.clear();
+  displayCards(dealerHand, "dealer", seeAllDealerCards);
+  displayCards(playerHand, "player");
+  console.log(`The value of your cards is: ${playerScore}`);
+}
+
+function findWinner(dealerScore, playerScore) {
+  if (dealerScore > playerScore) {
+    return "Dealer";
+  } else if (playerScore > dealerScore) {
+    return "Player";
+  } else {
+    return null;
+  }
+}
 
 while (true) {
-  displayCards(dealerHand, "dealer");
-  displayCards(playerHand, "player");
+  let deck = initializeDeck();
+  let playerHand = [];
+  let dealerHand = [];
+
+  dealCardsToHand(deck, playerHand, 2);
+  dealCardsToHand(deck, dealerHand, 2);
+
+  let playerScore = total(playerHand);
+  let dealerScore = total(dealerHand);
+
+  displayScoreAndCards(dealerHand, playerHand, playerScore);
 
   while (true) {
     console.log("hit or stay?");
     let answer = readline.question();
-    if (answer === "stay" || busted()) break;
+    if (answer === "hit") {
+      dealCardsToHand(deck, playerHand);
+      playerScore = total(playerHand);
+      displayScoreAndCards(dealerHand, playerHand, playerScore);
+    }
+    if (answer === "stay" || busted(playerScore)) break;
   }
 
-  if (busted()) {
-    // probably end the game? or ask the user to play again?
+  if (busted(playerScore)) {
+    console.log("You lose!");
+    break;
   } else {
     console.log("You chose to stay!"); // if player didn't bust, must have stayed to get here
   }
+  while (true) {
+    displayScoreAndCards(dealerHand, playerHand, playerScore, true);
+    if (dealerScore >= 17 || busted(dealerScore)) {
+      break;
+    }
+    dealCardsToHand(deck, dealerHand);
+    dealerScore = total(dealerHand);
+  }
+
+  if (busted(dealerScore)) {
+    console.log("Dealer loses!");
+    break;
+  } else {
+    console.log("Dealer chose to stay!"); // if player didn't bust, must have stayed to get here
+  }
+  let winner = findWinner(dealerScore, playerScore);
+  if (winner) {
+    console.log(`Dealer score is: ${dealerScore}`);
+    console.log(`Your score is: ${playerScore}`);
+    console.log(`${winner} wins!`);
+  } else {
+    console.log("It's a tie!");
+  }
+
   break;
 }
